@@ -37,15 +37,20 @@ const AdminDashboard = () => {
     // Selected item for viewing
     const [selectedOrder, setSelectedOrder] = useState(null);
 
-    // Security Check: Only allow Pramod Raut (or email 'pramodraut@example.com')
-    // For now, I'll allow based on name and role if specifically set, but usually it's email.
-    // Given the prompt, I'll check for "Pramod" in the name or a specific email if I had it.
+    // Security Check: Only allow admin session
     useEffect(() => {
-        if (!user || (user.email !== 'pramodraut04@gmail.com' && user.name !== 'Pramod Raut')) {
-            // navigate('/'); // Redirect if not admin
+        const adminId = sessionStorage.getItem('adminId');
+        if (adminId !== 'admin_pramod') {
+            navigate('/admin/login');
         }
         fetchData();
-    }, [user, activeTab]);
+    }, [activeTab]);
+
+    const handleAdminLogout = () => {
+        sessionStorage.removeItem('adminToken');
+        sessionStorage.removeItem('adminId');
+        navigate('/admin/login');
+    };
 
     const fetchData = async () => {
         setLoading(true);
@@ -147,9 +152,12 @@ const AdminDashboard = () => {
                         ))}
                     </nav>
 
-                    <div className="mt-20 pt-6 border-t border-white/10">
+                    <div className="mt-20 pt-6 border-t border-white/10 space-y-2">
                         <button onClick={() => navigate('/dashboard')} className="w-full flex items-center gap-3 px-5 py-4 text-slate-500 hover:text-white transition-all font-bold text-sm">
                             <LogOut size={18} /> Return to Site
+                        </button>
+                        <button onClick={handleAdminLogout} className="w-full flex items-center gap-3 px-5 py-4 text-red-500 hover:bg-red-500/10 rounded-xl transition-all font-bold text-sm">
+                            <Shield size={18} /> Logout Admin
                         </button>
                     </div>
                 </div>
@@ -165,10 +173,10 @@ const AdminDashboard = () => {
                         </div>
                         <div className="hidden md:flex items-center gap-4 bg-slate-50 p-2 rounded-xl border">
                             <div className="text-right">
-                                <p className="text-xs font-black text-[#0F172A] leading-none uppercase">{user?.name}</p>
+                                <p className="text-xs font-black text-[#0F172A] leading-none uppercase">admin_pramod</p>
                                 <p className="text-[10px] font-bold text-primary tracking-widest mt-1">SUPER ADMIN</p>
                             </div>
-                            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-black text-sm">PR</div>
+                            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-black text-sm">AP</div>
                         </div>
                     </header>
 

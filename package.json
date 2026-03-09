@@ -12,6 +12,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
     "autoprefixer": "^10.4.27",
+    "bcryptjs": "^3.0.3",
     "firebase": "^12.10.0",
     "framer-motion": "^12.35.1",
     "jspdf": "^4.2.0",

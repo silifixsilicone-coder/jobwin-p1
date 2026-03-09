@@ -202,7 +202,7 @@ const Dashboard = () => {
                                 </div>
                             )
                         })}
-                        {(user?.email === 'pramodraut04@gmail.com' || user?.name === 'Pramod Raut') && (
+                        {sessionStorage.getItem('adminId') === 'admin_pramod' && (
                             <div className="pt-6 mt-6 border-t border-white/10">
                                 <Link
                                     to="/admin"

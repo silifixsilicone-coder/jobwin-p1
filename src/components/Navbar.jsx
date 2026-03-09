@@ -80,7 +80,7 @@ const Navbar = () => {
                                             >
                                                 <LayoutDashboard size={18} /> Dashboard
                                             </Link>
-                                            {(user.email === 'pramodraut04@gmail.com' || user.name === 'Pramod Raut') && (
+                                            {sessionStorage.getItem('adminId') === 'admin_pramod' && (
                                                 <Link
                                                     to="/admin"
                                                     onClick={() => setIsProfileOpen(false)}

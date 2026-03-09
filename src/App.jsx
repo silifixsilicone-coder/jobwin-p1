@@ -17,6 +17,7 @@ import EditListing from './pages/EditListing';
 import FindWorkers from './pages/FindWorkers';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/AdminLogin';
+import AdminProtectedRoute from './components/AdminProtectedRoute';
 
 // Legal & Contact Pages
 import AboutUs from './pages/legal/AboutUs';
@@ -71,11 +72,11 @@ function App() {
                 </ProtectedRoute>
               } />
               <Route path="/admin" element={
-                <ProtectedRoute>
+                <AdminProtectedRoute>
                   <AdminDashboard />
-                </ProtectedRoute>
+                </AdminProtectedRoute>
               } />
-              <Route path="/admin-login" element={<AdminLogin />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
             </Routes>
           </main>
           <Footer />
