@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Clock, Send, IndianRupee, MessageCircle, User } from 'lucide-react';
+import { MapPin, Clock, Send, IndianRupee, MessageCircle, User, Phone } from 'lucide-react';
 import LeadModal from './LeadModal';
 import { useAuth } from '../context/AuthContext';
 
@@ -48,6 +48,7 @@ const JobCard = ({ job }) => {
                     <div className="flex-1 min-w-0">
                         <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Recruiter</p>
                         <h4 className="text-sm font-bold text-slate-800 truncate tracking-tight">{job.recruiterName || 'Verified User'}</h4>
+                        <p className="text-[10px] font-bold text-primary mt-0.5">{job.whatsappNumber || job.contactNumber}</p>
                     </div>
                 </div>
 
@@ -72,6 +73,13 @@ const JobCard = ({ job }) => {
                         className="flex-1 bg-[#25D366] hover:bg-[#20ba59] text-white font-bold py-3 px-4 rounded-md text-center text-xs transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm"
                     >
                         <MessageCircle size={16} fill="currentColor" /> WhatsApp
+                    </a>
+
+                    <a
+                        href={`tel:${job.whatsappNumber || job.contactNumber}`}
+                        className="flex-1 bg-[#0F172A] hover:bg-slate-800 text-white font-bold py-3 px-4 rounded-md text-center text-xs transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm"
+                    >
+                        <Phone size={16} fill="currentColor" /> Call Now
                     </a>
 
                     {!isOwner ? (

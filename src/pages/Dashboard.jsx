@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase/firebaseConfig';
 import { collection, query, where, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import {
-    Briefcase, Store, Wrench, Settings, Plus, Trash2, Loader2,
+    Briefcase, Store, Wrench, Settings, Plus, Trash2, Loader2, Edit,
     MessageSquare, ArrowUpRight, ArrowDownLeft, Phone, User,
     Calendar, LayoutGrid, TrendingUp, Activity, MapPin, Eye, Bell, CheckCircle,
     FilePlus, UserPlus, Package, Calculator, Shield
@@ -164,7 +164,7 @@ const Dashboard = () => {
         { id: 'become_worker', label: 'Become a Worker', icon: <UserPlus size={20} />, group: 'Creation' },
         { id: 'nearby', label: 'Nearby Leads', icon: <Bell size={20} />, badge: stats.nearby, group: 'Leads' },
         { id: 'leads', label: 'Direct Inbox', icon: <MessageSquare size={20} />, group: 'Leads' },
-        { id: 'jobs', label: 'Active Jobs', icon: <Briefcase size={20} />, group: 'Manage' },
+        { id: 'jobs', label: 'My Job Postings', icon: <Briefcase size={20} />, group: 'Manage' },
         { id: 'shops', label: 'Active Shops', icon: <Store size={20} />, group: 'Manage' },
         { id: 'repairs', label: 'Service Listings', icon: <Wrench size={20} />, group: 'Manage' },
     ];
@@ -524,8 +524,8 @@ const Dashboard = () => {
                                                     {activeTab === 'jobs' ? <Briefcase /> : activeTab === 'shops' ? <Store /> : <Wrench />}
                                                 </div>
                                                 <div className="flex gap-2">
-                                                    <Link to={`/edit/${activeTab}/${item.id}`} className="p-3 text-slate-300 hover:text-primary bg-light-grey rounded-md transition-all"><Plus size={18} className="rotate-45" /></Link>
-                                                    <button onClick={() => handleDelete(item.id)} className="p-3 text-slate-300 hover:text-red-500 bg-light-grey rounded-md transition-all"><Trash2 size={18} /></button>
+                                                    <Link to={`/edit/${activeTab}/${item.id}`} className="p-3 text-slate-300 hover:text-primary bg-light-grey rounded-md transition-all border border-transparent hover:border-primary/20"><Edit size={18} /></Link>
+                                                    <button onClick={() => handleDelete(item.id)} className="p-3 text-slate-300 hover:text-red-500 bg-light-grey rounded-md transition-all border border-transparent hover:border-red-100"><Trash2 size={18} /></button>
                                                 </div>
                                             </div>
                                             <h3 className="font-bold text-xl text-[#1A1A1A] mb-2 truncate tracking-tight uppercase leading-none">{item.title || item.shopName || item.serviceName}</h3>

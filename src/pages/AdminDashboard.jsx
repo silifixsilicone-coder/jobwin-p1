@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase/firebaseConfig';
-import { collection, query, getDocs, doc, updateDoc, where, orderBy, limit } from 'firebase/firestore';
+import { collection, query, getDocs, doc, updateDoc, deleteDoc, where, orderBy, limit } from 'firebase/firestore';
 import {
     Users, CreditCard, IndianRupee, Calculator, Shield,
     Search, UserCheck, UserX, Star, Zap, Clock,
     ArrowUpRight, CheckCircle2, XCircle, AlertCircle,
-    LayoutGrid, Settings, LogOut, Package, List, HardHat, FileSpreadsheet, Eye
+    LayoutGrid, Settings, LogOut, Package, List, HardHat, FileSpreadsheet, Eye, Briefcase, Trash2, Edit
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +29,7 @@ const AdminDashboard = () => {
     const [users, setUsers] = useState([]);
     const [bulkOrders, setBulkOrders] = useState([]);
     const [transactions, setTransactions] = useState([]);
+    const [allJobs, setAllJobs] = useState([]);
     const [settings, setSettings] = useState({
         basicRate: 499,
         premiumRate: 999
@@ -88,6 +89,9 @@ const AdminDashboard = () => {
             } else if (activeTab === 'payments') {
                 const transSnap = await getDocs(collection(db, 'transactions'));
                 setTransactions(transSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            } else if (activeTab === 'all_jobs') {
+                const jobsSnap = await getDocs(collection(db, 'jobs'));
+                setAllJobs(jobsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
             }
         } catch (error) {
             console.error("Admin fetch error:", error);
@@ -106,6 +110,17 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleDeleteJob = async (jobId) => {
+        if (window.confirm("Are you sure you want to PERMANENTLY delete this job post?")) {
+            try {
+                await deleteDoc(doc(db, 'jobs', jobId));
+                fetchData();
+            } catch (err) {
+                alert("Delete failed: " + err.message);
+            }
+        }
+    };
+
     const updatePrice = async (type, price) => {
         setSettings(prev => ({ ...prev, [type]: price }));
         // Save to a 'config' collection in real app
@@ -116,6 +131,7 @@ const AdminDashboard = () => {
         { id: 'users', label: 'User Management', icon: <Users size={20} /> },
         { id: 'orders', label: 'Order Monitor', icon: <Package size={20} /> },
         { id: 'payments', label: 'Transactions', icon: <CreditCard size={20} /> },
+        { id: 'all_jobs', label: 'Job Management', icon: <Briefcase size={20} /> },
         { id: 'settings', label: 'Platform Rates', icon: <Settings size={20} /> },
     ];
 
@@ -449,6 +465,62 @@ const AdminDashboard = () => {
                                             ))}
                                             {transactions.length === 0 && (
                                                 <tr><td colSpan="4" className="p-20 text-center font-bold text-slate-300 uppercase italic">No payment logs available</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </motion.div>
+                        ) : activeTab === 'all_jobs' ? (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div className="p-8 border-b flex justify-between items-center">
+                                    <h3 className="font-black text-[#0F172A] uppercase tracking-tight">Global Job Postings</h3>
+                                    <span className="text-sm font-bold text-slate-400">{allJobs.length} active posts</span>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left">
+                                        <thead>
+                                            <tr className="bg-slate-50 border-b">
+                                                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">Job Details</th>
+                                                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest">Recruiter</th>
+                                                <th className="p-6 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Budget</th>
+                                                <th className="p-6 text-[10px) font-black uppercase text-slate-400 tracking-widest text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y">
+                                            {allJobs.map(j => (
+                                                <tr key={j.id} className="hover:bg-slate-50 transition-colors">
+                                                    <td className="p-6 max-w-md">
+                                                        <p className="font-black text-[#0F172A] uppercase text-sm mb-1">{j.title}</p>
+                                                        <p className="text-xs text-slate-400 line-clamp-1">{j.description}</p>
+                                                        <p className="text-[10px] text-primary font-bold mt-1 uppercase tracking-widest">{j.location}</p>
+                                                    </td>
+                                                    <td className="p-6">
+                                                        <p className="font-bold text-slate-700">{j.recruiterName}</p>
+                                                        <p className="text-[10px] text-slate-400">{j.whatsappNumber || j.contactNumber}</p>
+                                                    </td>
+                                                    <td className="p-6 text-center">
+                                                        <p className="font-black text-slate-900 text-sm">₹{j.salaryMin} - ₹{j.salaryMax}</p>
+                                                    </td>
+                                                    <td className="p-6 text-right">
+                                                        <div className="flex justify-end gap-2">
+                                                            <button
+                                                                onClick={() => navigate(`/edit/jobs/${j.id}`)}
+                                                                className="p-2.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all border border-blue-100"
+                                                            >
+                                                                <Edit size={18} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteJob(j.id)}
+                                                                className="p-2.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all border border-red-100"
+                                                            >
+                                                                <Trash2 size={18} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {allJobs.length === 0 && (
+                                                <tr><td colSpan="4" className="p-20 text-center font-bold text-slate-300 uppercase italic">No job posts found in database</td></tr>
                                             )}
                                         </tbody>
                                     </table>
