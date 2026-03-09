@@ -4,11 +4,24 @@ import { Briefcase, Store, Wrench, FilePlus, ChevronRight, Search, UserPlus, Shi
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import RequestServiceModal from '../components/RequestServiceModal';
+import BannerSlider from '../components/BannerSlider';
+import { db } from '../firebase/firebaseConfig';
+import { collection, getDocs } from 'firebase/firestore';
+import { useEffect } from 'react';
 
 const Home = () => {
     const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
 
     const { user } = useAuth();
+    const [hasBanners, setHasBanners] = useState(false);
+
+    useEffect(() => {
+        const checkBanners = async () => {
+            const snap = await getDocs(collection(db, 'banners'));
+            setHasBanners(snap.size > 0);
+        };
+        checkBanners();
+    }, []);
 
     const actionCards = [
         {
@@ -45,45 +58,49 @@ const Home = () => {
 
     return (
         <div className="flex flex-col min-h-screen bg-light-grey">
-            {/* Hero Section */}
-            <section className="relative overflow-hidden bg-[#1A1A1A] py-24 sm:py-32">
-                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-                    <motion.h1
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
-                        className="text-5xl sm:text-7xl font-black tracking-tighter leading-none mb-8"
-                    >
-                        Window Problems? <br />
-                        <span className="text-primary tracking-tight">We Fix It All.</span>
-                    </motion.h1>
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.2 }}
-                        className="text-xl text-white/70 max-w-2xl mx-auto mb-12 font-medium"
-                    >
-                        Connect with 5,000+ verified glass and aluminium experts. From sliding repairs to new installations, get it done right.
-                    </motion.p>
-
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.4 }}
-                        className="flex flex-col sm:flex-row gap-4 justify-center"
-                    >
-                        <button
-                            onClick={() => setIsRequestModalOpen(true)}
-                            className="bg-primary text-white font-bold py-4 px-10 rounded-md shadow-xl hover:bg-primary-dark transition-all flex items-center justify-center gap-3 active:scale-95 transition-all group"
+            {/* Hero Slider */}
+            {hasBanners ? (
+                <BannerSlider />
+            ) : (
+                <section className="relative overflow-hidden bg-[#1A1A1A] py-24 sm:py-32">
+                    <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+                        <motion.h1
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6 }}
+                            className="text-5xl sm:text-7xl font-black tracking-tighter leading-none mb-8"
                         >
-                            <Search size={20} /> Post Your Requirement
-                        </button>
-                        <Link to="/find-job" className="bg-white/10 text-white border border-white/20 font-bold py-4 px-10 rounded-md hover:bg-white/20 transition-all flex items-center justify-center gap-3">
-                            Browse Opportunities <ChevronRight size={20} />
-                        </Link>
-                    </motion.div>
-                </div>
-            </section>
+                            Window Problems? <br />
+                            <span className="text-primary tracking-tight">We Fix It All.</span>
+                        </motion.h1>
+                        <motion.p
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.2 }}
+                            className="text-xl text-white/70 max-w-2xl mx-auto mb-12 font-medium"
+                        >
+                            Connect with 5,000+ verified glass and aluminium experts. From sliding repairs to new installations, get it done right.
+                        </motion.p>
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.4 }}
+                            className="flex flex-col sm:flex-row gap-4 justify-center"
+                        >
+                            <button
+                                onClick={() => setIsRequestModalOpen(true)}
+                                className="bg-primary text-white font-bold py-4 px-10 rounded-md shadow-xl hover:bg-primary-dark transition-all flex items-center justify-center gap-3 active:scale-95 transition-all group"
+                            >
+                                <Search size={20} /> Post Your Requirement
+                            </button>
+                            <Link to="/find-job" className="bg-white/10 text-white border border-white/20 font-bold py-4 px-10 rounded-md hover:bg-white/20 transition-all flex items-center justify-center gap-3">
+                                Browse Opportunities <ChevronRight size={20} />
+                            </Link>
+                        </motion.div>
+                    </div>
+                </section>
+            )}
 
             {/* Justdial Style Quick Search */}
             <section className="py-12 bg-white border-b border-slate-100">

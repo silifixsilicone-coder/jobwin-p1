@@ -6,7 +6,7 @@ import {
     Users, CreditCard, IndianRupee, Calculator, Shield,
     Search, UserCheck, UserX, Star, Zap, Clock,
     ArrowUpRight, CheckCircle2, XCircle, AlertCircle,
-    LayoutGrid, Settings, LogOut, Package, List, HardHat, FileSpreadsheet, Eye, Briefcase, Trash2, Edit
+    LayoutGrid, Settings, LogOut, Package, List, HardHat, FileSpreadsheet, Eye, Briefcase, Trash2, Edit, Image as ImageIcon, Plus, Check, X, Link as LinkIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -30,9 +30,20 @@ const AdminDashboard = () => {
     const [bulkOrders, setBulkOrders] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [allJobs, setAllJobs] = useState([]);
+    const [banners, setBanners] = useState([]);
     const [settings, setSettings] = useState({
         basicRate: 499,
         premiumRate: 999
+    });
+
+    // Banner Form State
+    const [newBanner, setNewBanner] = useState({
+        image: '',
+        heading: '',
+        subheading: '',
+        buttonText: 'Get Started',
+        link: '',
+        enabled: true
     });
 
     // Selected item for viewing
@@ -107,6 +118,9 @@ const AdminDashboard = () => {
             } else if (activeTab === 'all_jobs') {
                 const jobsSnap = await getDocs(collection(db, 'jobs'));
                 setAllJobs(jobsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            } else if (activeTab === 'banners') {
+                const bannersSnap = await getDocs(collection(db, 'banners'));
+                setBanners(bannersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
             }
         } catch (error) {
             console.error("Admin fetch error:", error);
@@ -136,6 +150,30 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleAddBanner = async (e) => {
+        e.preventDefault();
+        try {
+            const { addDoc } = await import('firebase/firestore');
+            await addDoc(collection(db, 'banners'), { ...newBanner, createdAt: new Date().toISOString() });
+            setNewBanner({ image: '', heading: '', subheading: '', buttonText: 'Get Started', link: '', enabled: true });
+            fetchData();
+        } catch (err) {
+            alert("Failed to add banner: " + err.message);
+        }
+    };
+
+    const handleDeleteBanner = async (id) => {
+        if (window.confirm("Delete this banner?")) {
+            await deleteDoc(doc(db, 'banners', id));
+            fetchData();
+        }
+    };
+
+    const handleToggleBanner = async (id, currentStatus) => {
+        await updateDoc(doc(db, 'banners', id), { enabled: !currentStatus });
+        fetchData();
+    };
+
     const updatePrice = async (type, price) => {
         setSettings(prev => ({ ...prev, [type]: price }));
         // Save to a 'config' collection in real app
@@ -147,6 +185,7 @@ const AdminDashboard = () => {
         { id: 'orders', label: 'Order Monitor', icon: <Package size={20} /> },
         { id: 'payments', label: 'Transactions', icon: <CreditCard size={20} /> },
         { id: 'all_jobs', label: 'Job Management', icon: <Briefcase size={20} /> },
+        { id: 'banners', label: 'Banner Manager', icon: <ImageIcon size={20} /> },
         { id: 'settings', label: 'Platform Rates', icon: <Settings size={20} /> },
     ];
 
@@ -539,6 +578,72 @@ const AdminDashboard = () => {
                                             )}
                                         </tbody>
                                     </table>
+                                </div>
+                            </motion.div>
+                        ) : activeTab === 'banners' ? (
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+                                <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                                    <h3 className="text-xl font-black text-[#0F172A] uppercase tracking-tighter mb-8 flex items-center gap-3">
+                                        <Plus className="text-primary" /> Create New Slide
+                                    </h3>
+                                    <form onSubmit={handleAddBanner} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase text-slate-400">Image URL</label>
+                                            <input required type="url" value={newBanner.image} onChange={e => setNewBanner({ ...newBanner, image: e.target.value })} placeholder="https://..." className="w-full p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm font-bold" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase text-slate-400">Heading</label>
+                                            <input required type="text" value={newBanner.heading} onChange={e => setNewBanner({ ...newBanner, heading: e.target.value })} placeholder="Main Title" className="w-full p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm font-bold" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase text-slate-400">Subheading</label>
+                                            <input type="text" value={newBanner.subheading} onChange={e => setNewBanner({ ...newBanner, subheading: e.target.value })} placeholder="Support text" className="w-full p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm font-bold" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase text-slate-400">Button Text</label>
+                                            <input type="text" value={newBanner.buttonText} onChange={e => setNewBanner({ ...newBanner, buttonText: e.target.value })} className="w-full p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm font-bold" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase text-slate-400">Redirect Link</label>
+                                            <input type="text" value={newBanner.link} onChange={e => setNewBanner({ ...newBanner, link: e.target.value })} placeholder="/find-job or https://..." className="w-full p-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm font-bold" />
+                                        </div>
+                                        <div className="flex items-end">
+                                            <button type="submit" className="w-full bg-primary text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all">Add Slide</button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {banners.map(b => (
+                                        <div key={b.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden group relative">
+                                            <div className="h-48 overflow-hidden relative">
+                                                <img src={b.image} alt={b.heading} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                <div className="absolute top-4 right-4 flex gap-2">
+                                                    <button onClick={() => handleToggleBanner(b.id, b.enabled)} className={`p-2 rounded-lg backdrop-blur-md shadow-xl transition-all ${b.enabled ? 'bg-emerald-500 text-white' : 'bg-slate-900/50 text-white hover:bg-slate-900'}`}>
+                                                        {b.enabled ? <Check size={16} /> : <X size={16} />}
+                                                    </button>
+                                                    <button onClick={() => handleDeleteBanner(b.id)} className="p-2 bg-red-500 text-white rounded-lg backdrop-blur-md shadow-xl hover:bg-red-600 transition-all">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="p-6">
+                                                <div className="flex justify-between items-start mb-2 text-[#0F172A]">
+                                                    <h4 className="font-black uppercase tracking-tighter text-lg truncate">{b.heading}</h4>
+                                                    {!b.enabled && <span className="text-[10px] font-black text-red-500 uppercase tracking-widest bg-red-50 px-2 py-1 rounded">Disabled</span>}
+                                                </div>
+                                                <p className="text-xs text-slate-400 line-clamp-2 font-medium mb-4">{b.subheading}</p>
+                                                <div className="flex items-center gap-2 text-[10px] font-bold text-primary truncate">
+                                                    <LinkIcon size={12} /> {b.link}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {banners.length === 0 && (
+                                        <div className="col-span-full py-20 text-center bg-slate-50 rounded-2xl border-2 border-dashed">
+                                            <p className="text-slate-300 font-bold uppercase">No banners added yet</p>
+                                        </div>
+                                    )}
                                 </div>
                             </motion.div>
                         ) : (
