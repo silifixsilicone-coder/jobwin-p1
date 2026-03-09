@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, ChevronDown, LayoutDashboard, LogOut, Briefcase } from 'lucide-react';
+import { Menu, X, ChevronDown, LayoutDashboard, LogOut, Briefcase, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -80,6 +80,15 @@ const Navbar = () => {
                                             >
                                                 <LayoutDashboard size={18} /> Dashboard
                                             </Link>
+                                            {(user.email === 'pramodraut04@gmail.com' || user.name === 'Pramod Raut') && (
+                                                <Link
+                                                    to="/admin"
+                                                    onClick={() => setIsProfileOpen(false)}
+                                                    className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-600 hover:bg-orange-50 hover:text-primary rounded-md transition-all border-t border-slate-100"
+                                                >
+                                                    <Shield size={18} /> Admin Panel
+                                                </Link>
+                                            )}
                                             <button
                                                 onClick={handleLogout}
                                                 className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 rounded-md transition-all"

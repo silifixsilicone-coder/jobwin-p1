@@ -6,7 +6,7 @@ import {
     Briefcase, Store, Wrench, Settings, Plus, Trash2, Loader2,
     MessageSquare, ArrowUpRight, ArrowDownLeft, Phone, User,
     Calendar, LayoutGrid, TrendingUp, Activity, MapPin, Eye, Bell, CheckCircle,
-    FilePlus, UserPlus, Package, Calculator
+    FilePlus, UserPlus, Package, Calculator, Shield
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -202,6 +202,16 @@ const Dashboard = () => {
                                 </div>
                             )
                         })}
+                        {(user?.email === 'pramodraut04@gmail.com' || user?.name === 'Pramod Raut') && (
+                            <div className="pt-6 mt-6 border-t border-white/10">
+                                <Link
+                                    to="/admin"
+                                    className="w-full flex items-center justify-between px-5 py-4 rounded-md transition-all font-black text-[10px] uppercase tracking-widest text-[#F28C28] hover:bg-white/5"
+                                >
+                                    <span className="flex items-center gap-3"><Shield size={20} /> Admin Control</span>
+                                </Link>
+                            </div>
+                        )}
                     </nav>
                 </div>
 

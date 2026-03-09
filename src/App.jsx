@@ -15,6 +15,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import EditListing from './pages/EditListing';
 import FindWorkers from './pages/FindWorkers';
+import AdminDashboard from './pages/AdminDashboard';
 
 // Legal & Contact Pages
 import AboutUs from './pages/legal/AboutUs';
@@ -66,6 +67,11 @@ function App() {
               <Route path="/edit/:type/:id" element={
                 <ProtectedRoute>
                   <EditListing />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <AdminDashboard />
                 </ProtectedRoute>
               } />
             </Routes>
