@@ -32,8 +32,11 @@ const Navbar = () => {
                 <div className="flex justify-between h-20 items-center">
                     {/* Logo */}
                     <div className="flex-shrink-0 flex items-center">
-                        <Link to="/" className="text-3xl font-black text-white hover:text-primary transition-colors">
-                            Winsizer
+                        <Link to="/" className="flex items-center gap-2 group">
+                            <img src="/logo.png" alt="Winsizer" className="h-12 w-auto object-contain" />
+                            <span className="text-3xl font-black text-white group-hover:text-primary transition-colors">
+                                Winsizer
+                            </span>
                         </Link>
                     </div>
 

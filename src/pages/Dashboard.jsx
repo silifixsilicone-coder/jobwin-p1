@@ -6,7 +6,7 @@ import {
     Briefcase, Store, Wrench, Settings, Plus, Trash2, Loader2,
     MessageSquare, ArrowUpRight, ArrowDownLeft, Phone, User,
     Calendar, LayoutGrid, TrendingUp, Activity, MapPin, Eye, Bell, CheckCircle,
-    FilePlus, UserPlus, Package
+    FilePlus, UserPlus, Package, Calculator
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +15,7 @@ import RepairServiceForm from '../components/forms/RepairServiceForm';
 import ShopForm from '../components/forms/ShopForm';
 import WorkerProfileForm from '../components/forms/WorkerProfileForm';
 import ProductForm from '../components/forms/ProductForm';
+import RegularSlidingWindowCalculator from '../components/RegularSlidingWindowCalculator';
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -156,6 +157,7 @@ const Dashboard = () => {
 
     const tabs = [
         { id: 'overview', label: 'Overview', icon: <LayoutGrid size={20} /> },
+        { id: 'calculator', label: 'WindSizer Calc', icon: <Calculator size={20} />, group: 'Tools' },
         { id: 'settings', label: 'My Profile', icon: <Settings size={20} /> },
         { id: 'my_services', label: 'My Services', icon: <Store size={20} />, group: 'Creation' },
         { id: 'post_job', label: 'Post a Job', icon: <FilePlus size={20} />, group: 'Creation' },
@@ -178,7 +180,7 @@ const Dashboard = () => {
                     </div>
 
                     <nav className="space-y-6">
-                        {['', 'Creation', 'Leads', 'Manage'].map(group => {
+                        {['', 'Tools', 'Creation', 'Leads', 'Manage'].map(group => {
                             const groupTabs = tabs.filter(t => (t.group || '') === group);
                             if (groupTabs.length === 0) return null;
                             return (
@@ -320,6 +322,10 @@ const Dashboard = () => {
                                         </div>
                                     )}
                                 </div>
+                            </motion.div>
+                        ) : activeTab === 'calculator' ? (
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                                <RegularSlidingWindowCalculator />
                             </motion.div>
                         ) : activeTab === 'post_job' ? (
                             <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}>

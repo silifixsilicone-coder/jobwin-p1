@@ -16,6 +16,13 @@ import Dashboard from './pages/Dashboard';
 import EditListing from './pages/EditListing';
 import FindWorkers from './pages/FindWorkers';
 
+// Legal & Contact Pages
+import AboutUs from './pages/legal/AboutUs';
+import ContactUs from './pages/legal/ContactUs';
+import TermsConditions from './pages/legal/TermsConditions';
+import PrivacyPolicy from './pages/legal/PrivacyPolicy';
+import RefundPolicy from './pages/legal/RefundPolicy';
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -40,6 +47,12 @@ function App() {
               <Route path="/find-repair" element={<FindRepair />} />
               <Route path="/find-workers" element={<FindWorkers />} />
               <Route path="/login" element={<Login />} />
+
+              <Route path="/about-us" element={<AboutUs />} />
+              <Route path="/contact-us" element={<ContactUs />} />
+              <Route path="/terms-conditions" element={<TermsConditions />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/refund-policy" element={<RefundPolicy />} />
 
               {/* Protected Routes */}
               <Route path="/dashboard" element={
