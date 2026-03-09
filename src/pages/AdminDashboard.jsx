@@ -38,14 +38,29 @@ const AdminDashboard = () => {
     // Selected item for viewing
     const [selectedOrder, setSelectedOrder] = useState(null);
 
-    // Security Check: Only allow admin session
+    // Security Check: Only allow admin session or specific Firebase user
     useEffect(() => {
         const adminId = sessionStorage.getItem('adminId');
-        if (adminId !== 'admin_pramod') {
+        const isFirebaseAdmin = user?.email === 'winsizer.com@gmail.com';
+
+        const checkAndElevateUser = async () => {
+            if (isFirebaseAdmin && user?.uid) {
+                try {
+                    const userRef = doc(db, 'users', user.uid);
+                    await updateDoc(userRef, { role: 'SUPERADMIN', isAdmin: true });
+                } catch (e) {
+                    console.error("Auto-elevation failed:", e);
+                }
+            }
+        };
+
+        if (adminId !== 'admin_pramod' && !isFirebaseAdmin) {
             navigate('/admin/login');
+        } else {
+            checkAndElevateUser();
+            fetchData();
         }
-        fetchData();
-    }, [activeTab]);
+    }, [activeTab, user]);
 
     const handleAdminLogout = () => {
         sessionStorage.removeItem('adminToken');
@@ -135,7 +150,7 @@ const AdminDashboard = () => {
         { id: 'settings', label: 'Platform Rates', icon: <Settings size={20} /> },
     ];
 
-    if (!user) return <div className="p-20 text-center font-bold uppercase tracking-widest">Access Denied</div>;
+    if (!user && sessionStorage.getItem('adminId') !== 'admin_pramod') return <div className="p-20 text-center font-bold uppercase tracking-widest text-[#0F172A]">Access Denied</div>;
 
     return (
         <div className="max-w-[1600px] mx-auto px-4 py-8 sm:px-6 lg:px-8 bg-slate-50 min-h-screen text-slate-900 font-sans">
@@ -189,7 +204,7 @@ const AdminDashboard = () => {
                         </div>
                         <div className="hidden md:flex items-center gap-4 bg-slate-50 p-2 rounded-xl border">
                             <div className="text-right">
-                                <p className="text-xs font-black text-[#0F172A] leading-none uppercase">admin_pramod</p>
+                                <p className="text-xs font-black text-[#0F172A] leading-none uppercase">{user?.email === 'winsizer.com@gmail.com' ? 'Admin Winsizer' : 'admin_pramod'}</p>
                                 <p className="text-[10px] font-bold text-primary tracking-widest mt-1">SUPER ADMIN</p>
                             </div>
                             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-black text-sm">AP</div>
