@@ -16,6 +16,7 @@ import Dashboard from './pages/Dashboard';
 import EditListing from './pages/EditListing';
 import FindWorkers from './pages/FindWorkers';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminLogin from './pages/AdminLogin';
 
 // Legal & Contact Pages
 import AboutUs from './pages/legal/AboutUs';
@@ -74,6 +75,7 @@ function App() {
                   <AdminDashboard />
                 </ProtectedRoute>
               } />
+              <Route path="/admin-login" element={<AdminLogin />} />
             </Routes>
           </main>
           <Footer />
