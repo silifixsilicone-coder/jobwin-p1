@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Calculator, Settings, RefreshCcw, FileText, Download,
     ChevronDown, Ruler, HardHat, FileSpreadsheet, IndianRupee,
-    Plus, Trash2, List, ClipboardList, Layers, Box
+    Plus, Trash2, List, ClipboardList, Layers, Box, ShieldCheck
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
@@ -35,7 +35,7 @@ const RegularSlidingWindowCalculator = () => {
     });
 
     const [showAdvanced, setShowAdvanced] = useState(false);
-    const [activeTab, setActiveTab] = useState('list'); // list, aluminium, glass, hardware, billing
+    const [activeTab, setActiveTab] = useState('list'); // list, aluminium, glass, invoice
 
     const resetReductions = () => {
         setReductions({
@@ -51,6 +51,10 @@ const RegularSlidingWindowCalculator = () => {
         if (unit === 'MM') return val / 25.4;
         if (unit === 'Soot') return val * 0.125;
         return val;
+    };
+
+    const convertToMM = (inches) => {
+        return inches * 25.4;
     };
 
     const roundToHalfFt = (inches) => {
@@ -75,10 +79,11 @@ const RegularSlidingWindowCalculator = () => {
         const qty = parseInt(win.qty) || 1;
         const tracks = parseInt(win.tracks) || 2;
 
+        const wMM = convertToMM(wIn);
+        const hMM = convertToMM(hIn);
+
         // Cutting Formulas
         const handlePattiHeight = hIn - reductions.handle;
-        // Bearing bottom varies by tracks, but prompt specified (Width - 6.5) / 2 for 2-track. 
-        // For 3-track, it's usually (Width - X) / 3. We'll use the user's manual value 6.5 as the baseline.
         const bearingBottomWidth = (wIn - reductions.bearing) / tracks;
 
         const glassHeight = hIn - reductions.glassHeight;
@@ -91,7 +96,7 @@ const RegularSlidingWindowCalculator = () => {
 
         return {
             ...win,
-            wIn, hIn, qty, tracks,
+            wIn, hIn, wMM, hMM, qty, tracks,
             handlePattiHeight,
             bearingBottomWidth,
             glassHeight,
@@ -106,8 +111,8 @@ const RegularSlidingWindowCalculator = () => {
         cost: acc.cost + curr.cost,
         glassPcs: acc.glassPcs + (curr.qty * curr.tracks),
         rollers: acc.rollers + (curr.qty * curr.tracks * 2),
-        locks: acc.locks + (curr.qty * curr.tracks / 2 * 2), // 1 lock per shutter usually
-        screws: acc.screws + (curr.qty * 20) // estimate
+        locks: acc.locks + (curr.qty * (curr.tracks === 2 ? 1 : curr.tracks === 3 ? 2 : 2)), // Adjust lock estimate
+        screws: acc.screws + (curr.qty * 20)
     }), { area: 0, cost: 0, glassPcs: 0, rollers: 0, locks: 0, screws: 0 });
 
     const downloadPDF = () => {
@@ -125,12 +130,12 @@ const RegularSlidingWindowCalculator = () => {
 
         doc.autoTable({
             startY: 40,
-            head: [['Location', 'Patti/Interlock (Ht)', 'Bearing Bottom (Wd)', 'Tracks']],
+            head: [['Location', 'Patti/Interlock (Ht)', 'Bearing Bottom (Wd)', 'Tracks/Qty']],
             body: calculatedData.map(d => [
                 d.location || 'N/A',
                 `${d.handlePattiHeight.toFixed(2)}" x ${d.qty * 2 * d.tracks} Pcs`,
                 `${d.bearingBottomWidth.toFixed(2)}" x ${d.qty * d.tracks} Pcs`,
-                `${d.tracks} Track`
+                `${d.tracks}T | Qty: ${d.qty}`
             ]),
             headStyles: { fillColor: primaryColor }
         });
@@ -141,7 +146,7 @@ const RegularSlidingWindowCalculator = () => {
         doc.text('Glass Cutting List', 105, 20, { align: 'center' });
         doc.autoTable({
             startY: 40,
-            head: [['Location', 'Glass Height', 'Glass Width', 'Total Pcs']],
+            head: [['Location', 'Glass Height (Inches)', 'Glass Width (Inches)', 'Total Pcs']],
             body: calculatedData.map(d => [
                 d.location || 'N/A',
                 `${d.glassHeight.toFixed(2)}"`,
@@ -169,7 +174,6 @@ const RegularSlidingWindowCalculator = () => {
             headStyles: { fillColor: primaryColor }
         });
 
-        // Hardware Summary on Invoice Page
         const finalY = doc.lastAutoTable.finalY + 20;
         doc.setFontSize(14);
         doc.text('Hardware Requirements', 20, finalY);
@@ -253,21 +257,31 @@ const RegularSlidingWindowCalculator = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Width</label>
-                                    <input
-                                        type="number"
-                                        className="w-full px-4 py-3 bg-light-grey border border-slate-200 rounded-md outline-none font-bold"
-                                        value={newItem.width}
-                                        onChange={(e) => setNewItem({ ...newItem, width: e.target.value })}
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            className="w-full px-4 py-3 bg-light-grey border border-slate-200 rounded-md outline-none font-bold"
+                                            value={newItem.width}
+                                            onChange={(e) => setNewItem({ ...newItem, width: e.target.value })}
+                                        />
+                                        {newItem.unit === 'Soot' && newItem.width && (
+                                            <span className="absolute right-2 bottom-1 text-[8px] text-slate-400">≈ {(parseFloat(newItem.width) * 3.175).toFixed(1)}mm</span>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Height</label>
-                                    <input
-                                        type="number"
-                                        className="w-full px-4 py-3 bg-light-grey border border-slate-200 rounded-md outline-none font-bold"
-                                        value={newItem.height}
-                                        onChange={(e) => setNewItem({ ...newItem, height: e.target.value })}
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            className="w-full px-4 py-3 bg-light-grey border border-slate-200 rounded-md outline-none font-bold"
+                                            value={newItem.height}
+                                            onChange={(e) => setNewItem({ ...newItem, height: e.target.value })}
+                                        />
+                                        {newItem.unit === 'Soot' && newItem.height && (
+                                            <span className="absolute right-2 bottom-1 text-[8px] text-slate-400">≈ {(parseFloat(newItem.height) * 3.175).toFixed(1)}mm</span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -312,7 +326,7 @@ const RegularSlidingWindowCalculator = () => {
                                 onClick={addWindow}
                                 className="w-full bg-primary text-white font-black py-4 rounded-md shadow-lg hover:bg-primary-dark transition-all uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
                             >
-                                <Plus size={16} /> Add to List
+                                <Plus size={16} /> Add to Order
                             </button>
                         </div>
 
@@ -321,7 +335,7 @@ const RegularSlidingWindowCalculator = () => {
                                 onClick={() => setShowAdvanced(!showAdvanced)}
                                 className="w-full flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-slate-400"
                             >
-                                <span>Reductions Settings</span>
+                                <span>Reduction Settings (Inches)</span>
                                 <Settings size={14} />
                             </button>
                             {showAdvanced && (
@@ -346,19 +360,18 @@ const RegularSlidingWindowCalculator = () => {
 
                 {/* List & Tabs Column */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white rounded-md border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="flex bg-light-grey border-b scrollbar-hide overflow-x-auto">
+                    <div className="bg-white rounded-md border border-slate-200 shadow-sm overflow-hidden min-h-[600px]">
+                        <div className="flex bg-light-grey border-b  overflow-x-auto">
                             {[
                                 { id: 'list', label: 'Order List', icon: <List size={16} /> },
-                                { id: 'aluminium', label: 'Aluminium', icon: <HardHat size={16} /> },
+                                { id: 'aluminium', label: 'Aluminium List', icon: <HardHat size={16} /> },
                                 { id: 'glass', label: 'Glass List', icon: <FileSpreadsheet size={16} /> },
-                                { id: 'hardware', label: 'Hardware', icon: <Box size={16} /> },
-                                { id: 'billing', label: 'Billing', icon: <IndianRupee size={16} /> }
+                                { id: 'invoice', label: 'Final Invoice', icon: <IndianRupee size={16} /> }
                             ].map(t => (
                                 <button
                                     key={t.id}
                                     onClick={() => setActiveTab(t.id)}
-                                    className={`px-6 py-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap min-w-fit flex-1 ${activeTab === t.id ? 'bg-white border-t-2 border-primary text-primary' : 'text-slate-400 hover:text-slate-600'}`}
+                                    className={`px-6 py-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap min-w-fit flex-1 ${activeTab === t.id ? 'bg-white border-t-4 border-primary text-primary' : 'text-slate-400 hover:text-slate-600'}`}
                                 >
                                     {t.icon} {t.label}
                                 </button>
@@ -368,7 +381,7 @@ const RegularSlidingWindowCalculator = () => {
                         <div className="p-8">
                             <AnimatePresence mode="wait">
                                 {activeTab === 'list' && (
-                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+                                    <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
                                         {windows.length === 0 ? (
                                             <div className="py-20 text-center opacity-30">
                                                 <ClipboardList size={48} className="mx-auto mb-4" />
@@ -380,18 +393,18 @@ const RegularSlidingWindowCalculator = () => {
                                                     <thead>
                                                         <tr className="border-b-2 border-slate-100 italic">
                                                             <th className="py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest">Location</th>
-                                                            <th className="py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Size</th>
-                                                            <th className="py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Track</th>
+                                                            <th className="py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Actual Size</th>
+                                                            <th className="py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">MM Version</th>
                                                             <th className="py-3 text-[10px] font-black uppercase text-slate-400 tracking-widest text-center">Qty</th>
                                                             <th className="py-3"></th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-slate-100">
-                                                        {windows.map(w => (
+                                                        {calculatedData.map(w => (
                                                             <tr key={w.id} className="group hover:bg-slate-50 transition-colors">
                                                                 <td className="py-4 font-black text-slate-800 uppercase text-sm">{w.location || 'Window'}</td>
                                                                 <td className="py-4 text-center font-bold text-slate-500">{w.width}x{w.height} <span className="text-[10px] lowercase text-slate-300">{w.unit}</span></td>
-                                                                <td className="py-4 text-center"><span className="bg-[#1A1A1A] text-white text-[9px] font-black px-2 py-1 rounded">{w.tracks}T</span></td>
+                                                                <td className="py-4 text-center font-bold text-slate-400 text-xs">{w.wMM.toFixed(0)}x{w.hMM.toFixed(0)} mm</td>
                                                                 <td className="py-4 text-center font-black text-primary">{w.qty}</td>
                                                                 <td className="py-4 text-right">
                                                                     <button onClick={() => removeWindow(w.id)} className="p-2 text-slate-300 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
@@ -406,101 +419,131 @@ const RegularSlidingWindowCalculator = () => {
                                 )}
 
                                 {activeTab === 'aluminium' && (
-                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            {calculatedData.map(d => (
-                                                <div key={d.id} className="bg-light-grey p-5 rounded-md border border-slate-200">
-                                                    <div className="flex justify-between items-center mb-4 border-b pb-2">
-                                                        <span className="font-black uppercase text-xs text-[#1A1A1A]">{d.location || 'Window'}</span>
-                                                        <span className="text-[10px] font-bold text-primary">{d.tracks} Track Shutter</span>
-                                                    </div>
-                                                    <div className="space-y-3">
-                                                        <div className="flex justify-between">
-                                                            <span className="text-[10px] font-bold text-slate-500 uppercase">Handle/Interlock (Ht)</span>
-                                                            <span className="font-black text-sm">{d.handlePattiHeight.toFixed(2)}" <span className="text-slate-300 text-[10px]">x {d.qty * d.tracks * 2} Pcs</span></span>
-                                                        </div>
-                                                        <div className="flex justify-between">
-                                                            <span className="text-[10px] font-bold text-slate-500 uppercase">Bearing Bottom (Wd)</span>
-                                                            <span className="font-black text-sm">{d.bearingBottomWidth.toFixed(2)}" <span className="text-slate-300 text-[10px]">x {d.qty * d.tracks} Pcs</span></span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                    <motion.div key="aluminium" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+                                        <div className="bg-primary/5 p-4 rounded-md border border-primary/10 flex justify-between items-center mb-4">
+                                            <span className="text-[10px] font-black uppercase text-primary tracking-widest">Aluminium Cutting Table</span>
+                                            <span className="text-[10px] font-bold text-slate-400 italic">Reductions: H:-{reductions.handle}", W:-{reductions.bearing}"</span>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left">
+                                                <thead className="bg-[#1A1A1A] text-white">
+                                                    <tr>
+                                                        <th className="p-4 text-[10px] font-black uppercase tracking-widest">Location</th>
+                                                        <th className="p-4 text-[10px] font-black uppercase tracking-widest">Patti/Hdl (Ht)</th>
+                                                        <th className="p-4 text-[10px] font-black uppercase tracking-widest">Bottom (Wd)</th>
+                                                        <th className="p-4 text-[10px] font-black uppercase tracking-widest">Total Pcs</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y border-x border-b">
+                                                    {calculatedData.map(d => (
+                                                        <tr key={d.id} className="hover:bg-slate-50">
+                                                            <td className="p-4 font-black text-slate-800 uppercase">{d.location}</td>
+                                                            <td className="p-4 font-bold text-primary">{d.handlePattiHeight.toFixed(2)}"</td>
+                                                            <td className="p-4 font-bold text-primary">{d.bearingBottomWidth.toFixed(2)}"</td>
+                                                            <td className="p-4 text-slate-500 text-xs font-bold">
+                                                                H: {d.qty * d.tracks * 2} | W: {d.qty * d.tracks}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </motion.div>
                                 )}
 
                                 {activeTab === 'glass' && (
-                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                                        <div className="bg-[#1A1A1A] p-4 rounded-md text-white mb-6 flex justify-between items-center">
-                                            <span className="font-black uppercase tracking-widest text-[10px]">Total Order Requirement</span>
-                                            <span className="text-primary font-black">{totalStats.glassPcs} Total Glass Pcs</span>
-                                        </div>
-                                        <table className="w-full text-left text-sm">
-                                            <thead className="bg-light-grey">
-                                                <tr>
-                                                    <th className="p-3 font-black uppercase text-[10px]">Location</th>
-                                                    <th className="p-3 font-black uppercase text-[10px]">Height</th>
-                                                    <th className="p-3 font-black uppercase text-[10px]">Width</th>
-                                                    <th className="p-3 font-black uppercase text-[10px]">Total Pcs</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y">
-                                                {calculatedData.map(d => (
-                                                    <tr key={d.id}>
-                                                        <td className="p-3 font-bold uppercase">{d.location}</td>
-                                                        <td className="p-3 font-black text-primary">{d.glassHeight.toFixed(2)}"</td>
-                                                        <td className="p-3 font-black text-primary">{d.glassWidth.toFixed(2)}"</td>
-                                                        <td className="p-3 font-bold">{d.qty * d.tracks} Pcs</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </motion.div>
-                                )}
-
-                                {activeTab === 'hardware' && (
-                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                        {[
-                                            { label: 'Nylon Rollers', val: totalStats.rollers, icon: <Layers className="text-primary" /> },
-                                            { label: 'Touch/Star Locks', val: totalStats.locks, icon: <ShieldCheck className="text-primary" /> },
-                                            { label: 'Screws (Approx)', val: totalStats.screws, icon: <Settings className="text-primary" /> },
-                                            { label: 'Wool Pile (Mtr)', val: (totalStats.area * 0.5).toFixed(0), icon: <Box className="text-primary" /> }
-                                        ].map((h, i) => (
-                                            <div key={i} className="bg-light-grey p-6 rounded-md text-center border border-slate-200">
-                                                <div className="mx-auto w-10 h-10 flex items-center justify-center mb-3">{h.icon}</div>
-                                                <p className="text-2xl font-black text-[#1A1A1A]">{h.val}</p>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{h.label}</p>
+                                    <motion.div key="glass" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                                        <div className="bg-slate-900 p-6 rounded-md text-white mb-6 flex justify-between items-center">
+                                            <div className="flex items-center gap-3">
+                                                <Box className="text-primary" />
+                                                <span className="font-black uppercase tracking-widest text-[11px]">Glass Cutting Manifest</span>
                                             </div>
-                                        ))}
+                                            <span className="text-primary font-black text-xl">{totalStats.glassPcs} <span className="text-[10px] uppercase">Pcs</span></span>
+                                        </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left border rounded-md">
+                                                <thead className="bg-light-grey border-b">
+                                                    <tr>
+                                                        <th className="p-4 font-black uppercase text-[10px]">Location</th>
+                                                        <th className="p-4 font-black uppercase text-[10px] text-center">Height (In)</th>
+                                                        <th className="p-4 font-black uppercase text-[10px] text-center">Width (In)</th>
+                                                        <th className="p-4 font-black uppercase text-[10px] text-center">Total Pcs</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y">
+                                                    {calculatedData.map(d => (
+                                                        <tr key={d.id} className="hover:bg-blue-50/30">
+                                                            <td className="p-4 font-bold uppercase">{d.location}</td>
+                                                            <td className="p-4 font-black text-primary text-center">{d.glassHeight.toFixed(2)}"</td>
+                                                            <td className="p-4 font-black text-primary text-center">{d.glassWidth.toFixed(2)}"</td>
+                                                            <td className="p-4 font-black text-center bg-slate-50">{d.qty * d.tracks}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </motion.div>
                                 )}
 
-                                {activeTab === 'billing' && (
-                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-                                        <div className="space-y-4">
-                                            {calculatedData.map(d => (
-                                                <div key={d.id} className="flex justify-between items-center text-sm border-b pb-3">
-                                                    <div>
-                                                        <p className="font-black uppercase text-[#1A1A1A]">{d.location}</p>
-                                                        <p className="text-slate-400 text-xs font-bold">{roundToHalfFt(d.wIn)}' x {roundToHalfFt(d.hIn)}' x {d.qty} Qty</p>
-                                                    </div>
-                                                    <p className="font-black text-slate-700">₹ {d.cost.toLocaleString()}</p>
-                                                </div>
-                                            ))}
+                                {activeTab === 'invoice' && (
+                                    <motion.div key="invoice" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead>
+                                                    <tr className="bg-slate-50 border-y">
+                                                        <th className="p-4 text-[10px] font-black uppercase text-slate-500">Item Details</th>
+                                                        <th className="p-4 text-[10px] font-black uppercase text-slate-500 text-right">Area (SqFt)</th>
+                                                        <th className="p-4 text-[10px] font-black uppercase text-slate-500 text-right">Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {calculatedData.map(d => (
+                                                        <tr key={d.id} className="border-b">
+                                                            <td className="p-4">
+                                                                <p className="font-black uppercase text-sm">{d.location}</p>
+                                                                <p className="text-slate-400 text-[10px] font-bold">{roundToHalfFt(d.wIn)}' x {roundToHalfFt(d.hIn)}' | {d.qty} Unit</p>
+                                                            </td>
+                                                            <td className="p-4 text-right font-bold text-slate-600">{d.area.toFixed(2)}</td>
+                                                            <td className="p-4 text-right font-black text-[#1A1A1A]">₹ {d.cost.toLocaleString()}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
                                         </div>
-                                        <div className="bg-primary text-white p-8 rounded-md flex flex-col md:flex-row justify-between items-center gap-6 shadow-2xl">
-                                            <div className="text-center md:text-left">
-                                                <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-70 mb-1">Total Billable Amount</p>
-                                                <p className="text-5xl font-black">₹ {totalStats.cost.toLocaleString()}</p>
-                                                <p className="text-sm font-bold opacity-80 mt-2">{totalStats.area.toFixed(2)} Total Measurable SqFt</p>
+
+                                        <div className="bg-primary text-white p-10 rounded-md flex flex-col md:flex-row justify-between items-center gap-8 shadow-2xl relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 p-4 opacity-5">
+                                                <IndianRupee size={150} />
+                                            </div>
+                                            <div className="text-center md:text-left relative z-10">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-80 mb-2">Total Party Balance</p>
+                                                <p className="text-6xl font-black">₹ {totalStats.cost.toLocaleString()}</p>
+                                                <div className="flex gap-4 mt-4 opacity-70 font-bold text-xs">
+                                                    <span>Area: {totalStats.area.toFixed(2)} SqFt</span>
+                                                    <span>|</span>
+                                                    <span>Windows: {calculatedData.length}</span>
+                                                </div>
                                             </div>
                                             <button
                                                 onClick={downloadPDF}
-                                                className="bg-white text-primary px-10 py-5 rounded-md font-black uppercase tracking-widest text-[10px] flex items-center gap-3 hover:scale-105 transition-transform shadow-xl w-full md:w-auto justify-center"
+                                                className="bg-white text-primary px-10 py-5 rounded-md font-black uppercase tracking-widest text-[11px] flex items-center gap-3 hover:scale-105 transition-transform shadow-xl w-full md:w-auto justify-center relative z-10"
                                             >
                                                 <Download size={20} /> Download Master Report
                                             </button>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            {[
+                                                { label: 'Rollers', val: totalStats.rollers },
+                                                { label: 'Locks', val: totalStats.locks },
+                                                { label: 'Screws', val: '~' + totalStats.screws },
+                                                { label: 'Wool Pile', val: (totalStats.area * 0.5).toFixed(0) + 'm' }
+                                            ].map(i => (
+                                                <div key={i.label} className="bg-slate-50 p-4 rounded border text-center">
+                                                    <p className="text-lg font-black">{i.val}</p>
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase">{i.label}</p>
+                                                </div>
+                                            ))}
                                         </div>
                                     </motion.div>
                                 )}
